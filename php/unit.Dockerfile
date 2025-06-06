@@ -1,9 +1,6 @@
 ARG PHP_VERSION=
-ARG NODE_VERSION=
+ARG NODE_VERSION=22
 
-############################################
-# Base Image
-############################################
 FROM serversideup/php:${PHP_VERSION}-unit AS base
 
 ENV SSL_MODE=off
