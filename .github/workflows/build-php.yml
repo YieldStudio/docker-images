@@ -6,16 +6,18 @@ on:
       - main
     paths:
       - php/**
+      - .github/workflows/build-php.yml
   pull_request:
     branches:
       - main
     paths:
       - php/**
+      - .github/workflows/build-php.yml
 
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: yieldstudio/php
+  REGISTRY: rg.fr-par.scw.cloud/yieldstudio
+  IMAGE_NAME: php
 
 jobs:
   matrix:
@@ -23,29 +25,21 @@ jobs:
     outputs:
       php_versions: ${{ steps.set.outputs.php_versions }}
       type: ${{ steps.set.outputs.type }}
-      dockerfile: ${{ steps.set.outputs.dockerfile }}
     steps:
       - name: Set PHP versions
         id: set
         run: |
           echo 'php_versions=["8.2","8.3","8.4"]' >> $GITHUB_OUTPUT
-          echo 'type=["unit"]' >> $GITHUB_OUTPUT
-          echo 'dockerfile=["unit.Dockerfile"]' >> $GITHUB_OUTPUT
-
+          echo 'type=["unit","nginx"]' >> $GITHUB_OUTPUT
   build:
     needs: matrix
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
     env:
       NODE_VERSION: '22'
     strategy:
       matrix: 
         php_version: ${{ fromJSON(needs.matrix.outputs.php_versions) }}
         type: ${{ fromJSON(needs.matrix.outputs.type) }}
-        dockerfile: ${{ fromJSON(needs.matrix.outputs.dockerfile) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,9 +54,9 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
+          username: nologin
+          password: ${{ secrets.REGISTRY_SECRET_TOKEN }}
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Docker metadata
         id: meta
@@ -79,7 +73,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./php
-          file: ./php/${{ matrix.dockerfile }}
+          file: ./php/${{ matrix.type }}.Dockerfile
           build-args: |
             PHP_VERSION=${{ matrix.php_version }}
             NODE_VERSION=${{ env.NODE_VERSION }}
@@ -102,7 +96,6 @@ jobs:
       matrix: 
         php_version: ${{ fromJSON(needs.matrix.outputs.php_versions) }}
         type: ${{ fromJSON(needs.matrix.outputs.type) }}
-        dockerfile: ${{ fromJSON(needs.matrix.outputs.dockerfile) }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -110,9 +103,9 @@ jobs:
       - name: Log into registry ${{ env.REGISTRY }}
         uses: docker/login-action@v3
         with:
+          username: nologin
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.REGISTRY_SECRET_TOKEN }}
       
       - name: Get Short SHA
         id: get_short_sha
