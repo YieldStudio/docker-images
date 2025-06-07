@@ -13,5 +13,8 @@ USER root
 
 WORKDIR /var/www/html/
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y git \    
     && install-php-extensions exif gd intl
+
+USER www-data
