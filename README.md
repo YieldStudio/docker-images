@@ -1,7 +1,4 @@
-# PHP Docker Images
-
-All images are hosted on:  
-`rg.fr-par.scw.cloud/yieldstudio`
+# Laravel Optimized PHP Docker Images
 
 ## Overview
 
@@ -58,6 +55,10 @@ services:
     volumes:
       - ./src:/var/www/html
 ```
+
+### Using [Laravel Sail](https://laravel.com/docs/12.x/sail)
+
+TODO
 
 ## Extending the Image & Adding PHP Extensions
 

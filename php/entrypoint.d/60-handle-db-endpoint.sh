@@ -6,7 +6,7 @@ script_name="db-endpoint-automations"
 
 if [ "$DISABLE_DEFAULT_CONFIG" = "false" ]; then
     # Check if DB_ENDPOINT is set
-    if [ -n "$DB_ENDPOINT" ] then
+    if [ -n "$DB_ENDPOINT" ]; then
         export DB_CONNECTION="pgsql"
         export DB_HOST="$(echo "$DB_ENDPOINT" | sed -E 's|^postgres://([^:]+):.*|\1|')"
         export DB_PORT="$(echo "$DB_ENDPOINT" | sed -E 's|^postgres://[^:]+:([^/]+).*|\1|')"
