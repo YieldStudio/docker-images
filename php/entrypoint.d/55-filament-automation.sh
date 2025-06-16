@@ -17,8 +17,6 @@ if [ "$DISABLE_DEFAULT_CONFIG" = "false" ]; then
             php "$APP_BASE_DIR/artisan" icons:cache
             if [ $? -eq 0 ]; then
                 echo "✅ Blade Icons cached successfully."
-            else
-                echo "❌ Failed to cache Blade Icons."
             fi
             set -e
         fi
@@ -32,8 +30,6 @@ if [ "$DISABLE_DEFAULT_CONFIG" = "false" ]; then
             php "$APP_BASE_DIR/artisan" filament:optimize
             if [ $? -eq 0 ]; then
                 echo "✅ Filament optimized successfully."
-            else
-                echo "❌ Failed to optimize Filament."
             fi
             set -e
         fi
