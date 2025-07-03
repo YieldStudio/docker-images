@@ -31,8 +31,8 @@ Images are tagged as follows:
 
 These images include automation scripts in [`php/entrypoint.d/`](php/entrypoint.d/) to simplify running Laravel applications in containers:
 
+- [`40-handle-db-endpoint.sh`](php/entrypoint.d/40-handle-db-endpoint.sh): Handles dynamic database endpoint configuration, useful for cloud environments.
 - [`55-filament-automation.sh`](php/entrypoint.d/55-filament-automation.sh): Automates common Laravel tasks such as running migrations, clearing cache, and managing queues at container startup.
-- [`60-handle-db-endpoint.sh`](php/entrypoint.d/60-handle-db-endpoint.sh): Handles dynamic database endpoint configuration, useful for cloud environments.
 
 You can customize or extend these scripts to fit your deployment needs.
 
