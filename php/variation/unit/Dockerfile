@@ -15,8 +15,8 @@ COPY --chmod=755 common/ /
 
 # Download and untar the Nginx Unit source code
 RUN set -ex && \
-    docker-php-serversideup-dep-install-alpine "${DEPENDENCY_PACKAGES_ALPINE}" && \
-    docker-php-serversideup-dep-install-debian "${DEPENDENCY_PACKAGES_DEBIAN}"  && \
+    docker-php-dep-install-alpine "${DEPENDENCY_PACKAGES_ALPINE}" && \
+    docker-php-dep-install-debian "${DEPENDENCY_PACKAGES_DEBIAN}"  && \
     mkdir -p /usr/lib/unit/modules /usr/lib/unit/debug-modules && \
     cd /usr/src/ && \
     git clone --depth 1 -b ${NGINX_UNIT_VERSION} https://github.com/nginx/unit && \
