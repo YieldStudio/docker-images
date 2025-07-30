@@ -1,0 +1,34 @@
+#!/bin/sh
+set -oe
+
+###################################################
+# Usage: docker-php-install-ci-tools-alpine
+###################################################
+# This script is intended to be called on build for sysadmins
+# who want to install CI tools.
+
+script_name="docker-php-install-ci-tools-alpine"
+
+CI_TOOLS="gnupg gosu curl ca-certificates zip unzip git supervisor sqlite3 libcap2-bin libpng-dev python3 dnsutils librsvg2-bin fswatch ffmpeg nano"
+
+# Check for root privileges
+if [ "$(id -u)" -ne 0 ]; then
+    echo "${script_name}: This script must be run as root within the container. Be sure to set \"USER root\" in your Dockerfile before running this script."
+    exit 1
+fi
+
+############
+# Sanity checks
+############
+if [ -f /etc/os-release ]; then
+    # Source the os-release file (including the $NAME variable)
+    . /etc/os-release
+else
+    echo "🛑 ERROR ($script_name): Unable to determine the OS."
+    exit 1
+fi
+
+if [ "$NAME" != "Alpine Linux" ]; then
+    echo "ℹ️ INFO ($script_name): No arguments were passed or the OS is not Alpine Linux. Continuing..."
+    exit 0
+fi

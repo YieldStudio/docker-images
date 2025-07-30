@@ -1,0 +1,111 @@
+#!/bin/sh
+set -oe
+
+###################################################
+# Usage: docker-php-install-ci-tools-debian
+###################################################
+# This script is intended to be called on build for sysadmins
+# who want to install CI tools.
+
+DEBIAN_FRONTEND=noninteractive
+script_name="docker-php-install-ci-tools-debian"
+
+CI_TOOLS="gnupg gosu curl ca-certificates zip unzip git supervisor sqlite3 libcap2-bin libpng-dev python3 dnsutils librsvg2-bin fswatch ffmpeg nano"
+
+# Check for root privileges
+if [ "$(id -u)" -ne 0 ]; then
+    echo "${script_name}: This script must be run as root within the container. Be sure to set \"USER root\" in your Dockerfile before running this script."
+    exit 1
+fi
+
+############
+# Sanity checks
+############
+if [ -f /etc/os-release ]; then
+    # Source the os-release file (including the $NAME variable)
+    . /etc/os-release
+else
+    echo "🛑 ERROR ($script_name): Unable to determine the OS."
+    exit 1
+fi
+
+if [ "$NAME" != "Debian GNU/Linux" ]; then
+    echo "ℹ️ INFO ($script_name): No arguments were passed or the OS is not Debian GNU/Linux. Continuing..."
+    exit 0
+fi
+
+
+############
+# Functions
+############
+mkdir -p /etc/apt/keyrings
+
+install_nodejs() {
+    echo "🤖 Installing Node.js version $NODE_VERSION"
+
+    curl -fsSL https://deb.nodesource.com/setup_$NODE_VERSION.x | bash -
+    docker-php-dep-install-debian nodejs
+
+    npm install -g npm
+    npm install -g pnpm
+    npm install -g yarn
+    npm install -g bun
+
+    echo "⚡️ Completed installation of Node.js version $NODE_VERSION"
+}
+
+install_mysql_client() {
+    echo "🤖 Installing MySQL client"
+    docker-php-dep-install-debian $MYSQL_CLIENT
+    echo "⚡️ Completed installation of MySQL client"
+}
+
+install_postgresql() {
+    echo "🤖 Installing PostgreSQL version $POSTGRES_VERSION"
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $VERSION_CODENAME-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+    docker-php-dep-install-debian "postgresql-client-$POSTGRES_VERSION"
+    echo "⚡️ Completed installation of PostgreSQL version $POSTGRES_VERSION"
+}
+
+#############
+# Main
+#############
+echo "🤖 Installing CI tools: $CI_TOOLS"
+docker-php-dep-install-debian $CI_TOOLS
+
+
+if [ -z "${NODE_VERSION}" ]; then
+    echo "ℹ️ INFO ($script_name): NODE_VERSION is not set. Skipping Node.js installation."
+else
+    case "${NODE_VERSION}" in
+        18|20|22|24)
+            version="${NODE_VERSION}"
+            install_nodejs
+            ;;
+        *)
+            echo "🛑 ERROR ($script_name): Unsupported Node.js version: $NODE_VERSION. Supported versions are 18, 20, 22, and 24."
+            exit 1
+            ;;
+    esac
+fi
+
+if [ -z "${MYSQL_CLIENT}" ]; then
+    echo "ℹ️ INFO ($script_name): MYSQL_CLIENT is not set. Skipping MySQL client installation."
+else
+    install_mysql_client
+fi
+
+if [ -z "${POSTGRES_VERSION}" ]; then
+    echo "ℹ️ INFO ($script_name): POSTGRES_VERSION is not set. Skipping PostgreSQL installation."
+else
+    case "${POSTGRES_VERSION}" in
+        12|13|14|15|16|17)
+            version="${POSTGRES_VERSION}"
+            install_postgresql
+            ;;
+        *)
+            echo "🛑 ERROR ($script_name): Unsupported PostgreSQL version: $POSTGRES_VERSION. Supported versions are 12, 13, 14, 15, 16, and 17."
+            exit 1
+            ;;
+    esac
+fi

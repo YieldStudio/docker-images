@@ -30,7 +30,7 @@ jobs:
         id: set
         run: |
           echo 'php_versions=["8.2","8.3","8.4"]' >> $GITHUB_OUTPUT
-          echo 'type=["unit","nginx"]' >> $GITHUB_OUTPUT
+          echo 'type=["unit","frankenphp","cli"]' >> $GITHUB_OUTPUT
   build:
     needs: matrix
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
     env:
       NODE_VERSION: '22'
     strategy:
-      matrix: 
+      matrix:
         php_version: ${{ fromJSON(needs.matrix.outputs.php_versions) }}
         type: ${{ fromJSON(needs.matrix.outputs.type) }}
     steps:
@@ -77,7 +77,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./php
-          file: ./php/${{ matrix.type }}.Dockerfile
+          file: ./php/variation/${{ matrix.type }}/Dockerfile
           build-args: |
             PHP_VERSION=${{ matrix.php_version }}
             NODE_VERSION=${{ env.NODE_VERSION }}
@@ -89,21 +89,21 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.php_version }}-${{ matrix.type }}
             ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      
+
   scan:
     if: github.event_name != 'pull_request'
-    needs: 
+    needs:
       - matrix
       - build
     runs-on: ubuntu-latest
     strategy:
-      matrix: 
+      matrix:
         php_version: ${{ fromJSON(needs.matrix.outputs.php_versions) }}
         type: ${{ fromJSON(needs.matrix.outputs.type) }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: Get Short SHA
         id: get_short_sha
         run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
@@ -123,5 +123,5 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
-      
+
 
