@@ -18,14 +18,15 @@ Two variants are available for each supported PHP version:
 
 Images are tagged as follows:
 
-- `ghcr.io/yieldstudio/php:<version>-nginx`
+- `ghcr.io/yieldstudio/php:<version>-frankenphp`
 - `ghcr.io/yieldstudio/php:<version>-unit`
+- `ghcr.io/yieldstudio/php:<version>-cli`
 
 **Examples:**
 
-- `ghcr.io/yieldstudio/php:8.2-nginx`
+- `ghcr.io/yieldstudio/php:8.2-frankenphp`
 - `ghcr.io/yieldstudio/php:8.3-unit`
-- `ghcr.io/yieldstudio/php:8.4-nginx`
+- `ghcr.io/yieldstudio/php:8.4-frankenphp`
 
 ## Laravel Automation
 
@@ -41,7 +42,7 @@ You can customize or extend these scripts to fit your deployment needs.
 ### Using with Docker CLI
 
 ```bash
-docker run --rm -it ghcr.io/yieldstudio/php:8.3-nginx php -v
+docker run --rm -it ghcr.io/yieldstudio/php:8.3-frankenphp php -v
 ```
 
 ### Using in a Docker Compose file
@@ -49,7 +50,7 @@ docker run --rm -it ghcr.io/yieldstudio/php:8.3-nginx php -v
 ```yaml
 services:
   app:
-    image: ghcr.io/yieldstudio/php:8.3-unit
+    image: ghcr.io/yieldstudio/php:8.3-frankenphp
     ports:
       - "8080:8080"
     volumes:
@@ -70,7 +71,7 @@ ARG NODE_VERSION=22
 ############################################
 # Base Image
 ############################################
-FROM ghcr.io/yieldstudio/php:${PHP_VERSION}-nginx AS base
+FROM ghcr.io/yieldstudio/php:${PHP_VERSION}-frankenphp AS base
 
 ENV HEALTHCHECK_PATH="/up"
 
@@ -89,9 +90,6 @@ ARG NODE_VERSION=22
 ARG MYSQL_CLIENT="mysql-client"
 ARG POSTGRES_VERSION=17
 
-ENV AUTORUN_ENABLED=false
-ENV PHP_OPCACHE_ENABLE=0
-
 ENV XDEBUG_MODE="off"
 ENV XDEBUG_CONFIG="client_host=host.docker.internal"
 
@@ -109,6 +107,8 @@ RUN apt-get update && apt-get upgrade -y \
     && npm install -g bun \
     && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --dearmor | tee /etc/apt/keyrings/yarn.gpg >/dev/null \
     && echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list \
+    && curl -sS https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | tee /etc/apt/keyrings/pgdg.gpg >/dev/null \
+    && echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update \
     && apt-get install -y yarn \
     && apt-get -y autoremove \
@@ -141,12 +141,8 @@ USER root
 
 RUN install-php-extensions xdebug
 
-RUN echo "" >> /usr/local/etc/php-fpm.d/docker-php-serversideup-pool.conf && \
-    echo "user = www-data" >> /usr/local/etc/php-fpm.d/docker-php-serversideup-pool.conf && \
-    echo "group = www-data" >> /usr/local/etc/php-fpm.d/docker-php-serversideup-pool.conf
-
 ############################################
-# 
+# Composer Build
 ############################################
 FROM base AS composer
 
@@ -186,6 +182,8 @@ RUN if [ -f yarn.lock ]; then \
 ############################################
 FROM base
 
+ENV AUTORUN_ENABLED=true
+ENV PHP_OPCACHE_ENABLE=1
 ENV PHP_MEMORY_LIMIT=512M
 ENV SSL_MODE=mixed
 
@@ -244,7 +242,7 @@ services:
 
 +   schedule:
 +       image: 'sail-8.4/app'
-+       command: ["php", "/var/www/html/artisan", "schedule:work"]
++       command: ["artisan", "schedule:work"]
 +       stop_signal: SIGTERM
 +       healthcheck:
 +           test: ["CMD", "healthcheck-schedule"]
@@ -260,7 +258,7 @@ services:
 
 +   queue:
 +       image: 'sail-8.4/app'
-+       command: ["php", "/var/www/html/artisan", "queue:work", "--tries=3"]
++       command: ["artisan", "queue:listen", "--tries=3"]
 +       stop_signal: SIGTERM
 +       healthcheck:
 +           test: ["CMD", "healthcheck-queue"]
@@ -282,7 +280,7 @@ To add more PHP extensions or customize the image, create your own `Dockerfile` 
 ### Example: Adding PHP Extensions
 
 ```dockerfile
-FROM ghcr.io/yieldstudio/php:8.3-nginx
+FROM ghcr.io/yieldstudio/php:8.3-frankenphp
 
 # Install additional PHP extensions
 RUN install-php-extensions \
@@ -305,10 +303,10 @@ RUN docker-php-ext-install pdo_mysql
 ### Build Your Custom Image
 
 ```bash
-docker build -t my-custom-php:8.3-nginx .
+docker build -t my-custom-php:8.3-frankenphp .
 ```
 
-You can now use `my-custom-php:8.3-nginx` in your projects.
+You can now use `my-custom-php:8.3-frankenphp` in your projects.
 
 ## Build & CI
 
