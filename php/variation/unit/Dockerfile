@@ -11,7 +11,7 @@ ARG DEPENDENCY_PACKAGES_DEBIAN='ca-certificates git build-essential libssl-dev l
 ARG NGINX_UNIT_VERSION='1.34.2'
 
 # copy our scripts
-COPY --chmod=755 src/common/ /
+COPY --chmod=755 common/ /
 
 # Download and untar the Nginx Unit source code
 RUN set -ex && \
