@@ -1,7 +1,6 @@
 ARG BASE_OS_VERSION='bookworm'
 ARG PHP_VERSION='8.4'
-ARG HUB_REPO='docker.io'
-ARG BASE_IMAGE="${HUB_REPO}/php:${PHP_VERSION}-cli-${BASE_OS_VERSION}"
+ARG BASE_IMAGE="php:${PHP_VERSION}-cli-${BASE_OS_VERSION}"
 
 ##########
 # Unit Build
@@ -121,7 +120,7 @@ COPY --chmod=755 common/ /
 COPY --chmod=755 variations/unit/etc/ /etc/
 
 # install composer from Composer's official Docker image
-COPY --from=public.ecr.aws/composer/composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer/composer:2 /usr/bin/composer /usr/bin/composer
 
 # install pecl extensions & dependencies
 RUN docker-php-dep-install-alpine "${DEPENDENCY_PACKAGES_ALPINE}" && \

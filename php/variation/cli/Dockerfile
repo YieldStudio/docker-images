@@ -1,8 +1,7 @@
 ARG BASE_OS_VERSION='bookworm'
 ARG PHP_VERSION='8.4'
 ARG PHP_VARIATION='cli'
-ARG HUB_REPO='docker.io'
-ARG BASE_IMAGE="${HUB_REPO}/docker/library/php:${PHP_VERSION}-${PHP_VARIATION}-${BASE_OS_VERSION}"
+ARG BASE_IMAGE="php:${PHP_VERSION}-${PHP_VARIATION}-${BASE_OS_VERSION}"
 
 ##########
 # CLI: Main Image
@@ -64,7 +63,7 @@ RUN docker-php-dep-install-alpine "${DEPENDENCY_PACKAGES_ALPINE}" && \
     install-php-extensions "${DEPENDENCY_PHP_EXTENSIONS}"
 
 # install composer from Composer's official Docker image
-COPY --from=public.ecr.aws/composer/composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer/composer:2 /usr/bin/composer /usr/bin/composer
 
 RUN docker-php-set-file-permissions --owner www-data:www-data --service cli
 

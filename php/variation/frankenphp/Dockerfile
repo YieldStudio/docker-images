@@ -1,8 +1,7 @@
 ARG BASE_OS_VERSION='bookworm'
 ARG PHP_VERSION='8.4'
 ARG FRANKEN_PHP_VERSION='1.8'
-ARG HUB_REPO='docker.io'
-ARG BASE_IMAGE="${HUB_REPO}/dunglas/frankenphp:${FRANKEN_PHP_VERSION}-php${PHP_VERSION}-${BASE_OS_VERSION}"
+ARG BASE_IMAGE="dunglas/frankenphp:${FRANKEN_PHP_VERSION}-php${PHP_VERSION}-${BASE_OS_VERSION}"
 
 ##########
 # FrankenPHP: Main Image
@@ -50,7 +49,7 @@ COPY --chmod=755 common/ /
 COPY --chmod=755 variation/frankenphp/etc/ /etc/
 
 # install composer from Composer's official Docker image
-COPY --from=public.ecr.aws/composer/composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer/composer:2 /usr/bin/composer /usr/bin/composer
 
 # install pecl extensions & dependencies
 RUN docker-php-dep-install-alpine "${DEPENDENCY_PACKAGES_ALPINE}" && \
