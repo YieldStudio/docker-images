@@ -117,7 +117,7 @@ COPY --from=build /var/lib/unit/ /var/lib/unit/
 
 # copy our scripts
 COPY --chmod=755 common/ /
-COPY --chmod=755 variations/unit/etc/ /etc/
+COPY --chmod=755 variation/unit/etc/ /etc/
 
 # install composer from Composer's official Docker image
 COPY --from=composer/composer:2 /usr/bin/composer /usr/bin/composer
