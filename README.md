@@ -115,8 +115,8 @@ RUN apt-get update && apt-get upgrade -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN docker-php-serversideup-set-id www-data $WWWUSER:$WWWGROUP \
-    && docker-php-serversideup-set-file-permissions --owner $WWWUSER:$WWWGROUP --service nginx \
+RUN docker-php-set-id www-data $WWWUSER:$WWWGROUP \
+    && docker-php-set-file-permissions --owner $WWWUSER:$WWWGROUP --service frankenphp \
     && useradd -mNo -g www-data -u $(id -u www-data) sail
 
 RUN install-php-extensions xdebug
