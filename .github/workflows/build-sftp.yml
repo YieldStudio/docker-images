@@ -1,0 +1,101 @@
+name: Build SFTP Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - sftp/**
+      - .github/workflows/build-sftp.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - sftp/**
+      - .github/workflows/build-sftp.yml
+
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: yieldstudio/sftp
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,prefix=
+            type=ref,event=tag,prefix=v
+            type=sha,prefix=
+            type=raw
+
+      - name: Build docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./sftp
+          file: ./sftp/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha,scope=sftp
+          cache-to: type=gha,scope=sftp,mode=max
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  scan:
+    if: github.event_name != 'pull_request'
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get Short SHA
+        id: get_short_sha
+        run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
+      - name: Run Trivy Vulnerability Scan
+        uses: aquasecurity/trivy-action@0.31.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          vuln-type: 'os,library'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+
