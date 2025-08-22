@@ -53,7 +53,7 @@ jobs:
             type=ref,event=branch,prefix=
             type=ref,event=tag,prefix=v
             type=sha,prefix=
-            type=raw
+            type=raw,value=latest
 
       - name: Build docker image
         uses: docker/build-push-action@v6
