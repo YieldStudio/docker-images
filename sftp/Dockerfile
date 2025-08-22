@@ -15,4 +15,11 @@ COPY --chmod=755 common/ /
 
 EXPOSE 22
 
+HEALTHCHECK \
+  --interval=15s \
+  --timeout=5s \
+  --start-period=15s \
+  --retries=2 \
+  CMD [ "/usr/local/bin/healthcheck.sh" ]
+
 ENTRYPOINT ["docker-sftp-entrypoint"]

@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -eu
+
+AWS_S3_ROOTDIR=${AWS_S3_ROOTDIR:-"/opt/s3fs"}
+
+# Where are we going to mount the remote bucket resource in our container.
+AWS_S3_MOUNT=${AWS_S3_MOUNT:-"${AWS_S3_ROOTDIR%/}/bucket"}
+
+if [ "$ENABLE_S3FS" = "true" ] || [ "$ENABLE_S3FS" = "1" ]; then
+    grep fuse.s3fs /proc/mounts | grep -q "${AWS_S3_MOUNT}" || exit 1
+else
+    pgrep /usr/sbin/sshd > /dev/null || exit 1
+fi
+
+exit 0
