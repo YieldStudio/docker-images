@@ -107,46 +107,46 @@ function setupS3FS() {
   S3FS_DEBUG=${S3FS_DEBUG:-"0"}
 
   # Root directory for settings and bucket.
-  AWS_S3_ROOTDIR=${AWS_S3_ROOTDIR:-"/opt/s3fs"}
+  S3FS_ROOTDIR=${S3FS_ROOTDIR:-"/opt/s3fs"}
 
   # Where are we going to mount the remote bucket resource in our container.
-  AWS_S3_MOUNT=${AWS_S3_MOUNT:-"${AWS_S3_ROOTDIR%/}/bucket"}
+  S3FS_MOUNT=${S3FS_MOUNT:-"${S3FS_ROOTDIR%/}/bucket"}
 
   # Create destination directory if it does not exist.
-  if [ ! -d "$AWS_S3_MOUNT" ]; then
-      mkdir -p "$AWS_S3_MOUNT"
+  if [ ! -d "$S3FS_MOUNT" ]; then
+      mkdir -p "$S3FS_MOUNT"
   fi
 
-  AWS_S3_AUTHFILE=${AWS_S3_AUTHFILE:-"${AWS_S3_ROOTDIR%/}/passwd-s3fs"}
+  S3FS_AUTHFILE=${S3FS_AUTHFILE:-"${S3FS_ROOTDIR%/}/passwd-s3fs"}
 
-  if [ -z "${AWS_S3_CREDENTIALS}" -a -n "${AWS_S3_ACCESS_KEY_ID}" -a -n "${AWS_S3_SECRET_ACCESS_KEY}" ]; then
-      AWS_S3_CREDENTIALS="${AWS_S3_ACCESS_KEY_ID}:${AWS_S3_SECRET_ACCESS_KEY}"
+  if [ -z "${S3FS_CREDENTIALS}" -a -n "${AWS_ACCESS_KEY_ID}" -a -n "${AWS_SECRET_ACCESS_KEY}" ]; then
+      S3FS_CREDENTIALS="${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}"
   fi
 
   # Create or use authorisation file
-  if [ -n "${AWS_S3_CREDENTIALS}" ]; then
-      echo "${AWS_S3_CREDENTIALS}" > $AWS_S3_AUTHFILE
-      chmod 400 $AWS_S3_AUTHFILE
+  if [ -n "${S3FS_CREDENTIALS}" ]; then
+      echo "${S3FS_CREDENTIALS}" > $S3FS_AUTHFILE
+      chmod 400 $S3FS_AUTHFILE
   else
       echo "Error: You need to provide some AWS credentials"
       exit 128
   fi
 
-  if [ -z "${AWS_S3_BUCKET}" ]; then
-      echo "Error: AWS_S3_BUCKET not provided"
+  if [ -z "${AWS_BUCKET}" ]; then
+      echo "Error: AWS_BUCKET not provided"
       exit 128
   fi
 
-  if [ -z "${AWS_S3_URL}" ]; then
-      AWS_S3_URL="https://s3.amazonaws.com"
+  if [ -z "${AWS_ENDPOINT}" ]; then
+      AWS_ENDPOINT="https://s3.amazonaws.com"
   fi
 
-  if [ -z "${AWS_S3_REGION}" ]; then
-      AWS_S3_REGION="us-east-1"
+  if [ -z "${AWS_DEFAULT_REGION}" ]; then
+      AWS_DEFAULT_REGION="us-east-1"
   fi
 
-  if [ -n "${AWS_S3_SECRET_ACCESS_KEY}" ]; then
-      unset AWS_S3_SECRET_ACCESS_KEY
+  if [ -n "${AWS_SECRET_ACCESS_KEY}" ]; then
+      unset AWS_SECRET_ACCESS_KEY
   fi
 
   # Debug options
@@ -160,23 +160,37 @@ function setupS3FS() {
       S3FS_ARGS="-o $S3FS_ARGS"
   fi
 
+  # Mount options
+  if [ $AWS_USE_PATH_STYLE_ENDPOINT = "true" ] || [ $AWS_USE_PATH_STYLE_ENDPOINT = "1" ]; then
+      S3FS_ARGS="${S3FS_ARGS} -o use_path_request_style"
+  fi
+
+  if [ $S3FS_ALLOW_OTHER = "true" ] || [ $S3FS_ALLOW_OTHER = "1" ]; then
+      S3FS_ARGS="${S3FS_ARGS} -o allow_other"
+  fi
+
+  if [ $S3FS_NOCOPYAPI = "true" ] || [ $S3FS_NOCOPYAPI = "1" ]; then
+      S3FS_ARGS="${S3FS_ARGS} -o nocopyapi"
+  fi
+
+
+  S3FS_ARGS="${S3FS_ARGS} -o parallel_count=${S3FS_PARALLEL_COUNT:-"15"}"
+  S3FS_ARGS="${S3FS_ARGS} -o multipart_size=${S3FS_MULTIPART_SIZE:-"128"}"
+
   # Mount and verify that something is present. davfs2 always creates a lost+found
   # sub-directory, so we can use the presence of some file/dir as a marker to
   # detect that mounting was a success. Execute the command on success.
   s3fs ${DEBUG_OPTS} ${S3FS_ARGS} \
-      -o passwd_file=${AWS_S3_AUTHFILE} \
-      -o url=${AWS_S3_URL} \
-      -o endpoint=${AWS_S3_REGION} \
-      ${AWS_S3_BUCKET} ${AWS_S3_MOUNT}
+      -o passwd_file=${S3FS_AUTHFILE} \
+      -o url=${AWS_ENDPOINT} \
+      -o endpoint=${AWS_DEFAULT_REGION} \
+      ${AWS_BUCKET} ${S3FS_MOUNT}
 
   # s3fs can claim to have a mount even though it didn't succeed.
   # Doing an operation actually forces it to detect that and remove the mount.
-  echo "Verifying mount by listing ${AWS_S3_MOUNT}:"
-  ls "${AWS_S3_MOUNT}"
-
-  mounted=$(mount | grep fuse.s3fs | grep "${AWS_S3_MOUNT}")
+  mounted=$(mount | grep fuse.s3fs | grep "${S3FS_MOUNT}")
   if [ -n "${mounted}" ]; then
-      echo "Mounted bucket ${AWS_S3_BUCKET} onto ${AWS_S3_MOUNT}"
+      echo "Mounted bucket ${AWS_BUCKET} onto ${S3FS_MOUNT}"
   else
       echo "Mount failure"
       exit 128
