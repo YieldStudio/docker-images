@@ -173,9 +173,8 @@ function setupS3FS() {
       S3FS_ARGS="${S3FS_ARGS} -o nocopyapi"
   fi
 
-
-  S3FS_ARGS="${S3FS_ARGS} -o parallel_count=${S3FS_PARALLEL_COUNT:-"15"}"
-  S3FS_ARGS="${S3FS_ARGS} -o multipart_size=${S3FS_MULTIPART_SIZE:-"128"}"
+  S3FS_ARGS="${S3FS_ARGS} -o parallel_count=$((${S3FS_PARALLEL_COUNT:-"15"}))"
+  S3FS_ARGS="${S3FS_ARGS} -o multipart_size=$((${S3FS_MULTIPART_SIZE:-"128"}))"
 
   echo "Start with s3fs ${DEBUG_OPTS} ${S3FS_ARGS} -o passwd_file=${S3FS_AUTHFILE} -o url=${AWS_ENDPOINT} -o endpoint=${AWS_DEFAULT_REGION}"
 
