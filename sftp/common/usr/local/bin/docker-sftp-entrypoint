@@ -161,15 +161,15 @@ function setupS3FS() {
   fi
 
   # Mount options
-  if [ $AWS_USE_PATH_STYLE_ENDPOINT = "true" ] || [ $AWS_USE_PATH_STYLE_ENDPOINT = "1" ]; then
+  if [ "$AWS_USE_PATH_STYLE_ENDPOINT" = "true" ] || [ "$AWS_USE_PATH_STYLE_ENDPOINT" = "1" ]; then
       S3FS_ARGS="${S3FS_ARGS} -o use_path_request_style"
   fi
 
-  if [ $S3FS_ALLOW_OTHER = "true" ] || [ $S3FS_ALLOW_OTHER = "1" ]; then
+  if [ "$S3FS_ALLOW_OTHER" = "true" ] || [ "$S3FS_ALLOW_OTHER" = "1" ]; then
       S3FS_ARGS="${S3FS_ARGS} -o allow_other"
   fi
 
-  if [ $S3FS_NOCOPYAPI = "true" ] || [ $S3FS_NOCOPYAPI = "1" ]; then
+  if [ "$S3FS_NOCOPYAPI" = "true" ] || [ "$S3FS_NOCOPYAPI" = "1" ]; then
       S3FS_ARGS="${S3FS_ARGS} -o nocopyapi"
   fi
 
