@@ -169,7 +169,7 @@ function setupS3FS() {
       S3FS_ARGS="${S3FS_ARGS} -o allow_other"
   fi
 
-  if [ "$S3FS_NOCOPYAPI" = "true" ] || [ "$S3FS_NOCOPYAPI" = "1" ]; then
+  if [ "$S3FS_NO_COPY_API" = "true" ] || [ "$S3FS_NO_COPY_API" = "1" ]; then
       S3FS_ARGS="${S3FS_ARGS} -o nocopyapi"
   fi
 
@@ -198,7 +198,7 @@ function setupS3FS() {
 }
 
 # Setup S3FS if needed
-if [ "$ENABLE_S3FS" = "true" ] || [ "$ENABLE_S3FS" = "1" ]; then
+if [ "$S3FS_ENABLED" = "true" ] || [ "$S3FS_ENABLED" = "1" ]; then
     setupS3FS
 fi
 

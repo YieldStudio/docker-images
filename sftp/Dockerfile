@@ -15,6 +15,9 @@ COPY --chmod=755 common/ /
 
 EXPOSE 22
 
+ENV S3FS_PARALLEL_COUNT="5"
+ENV S3FS_MULTIPART_SIZE="128"
+
 HEALTHCHECK \
   --interval=15s \
   --timeout=5s \
