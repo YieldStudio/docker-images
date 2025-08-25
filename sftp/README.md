@@ -107,32 +107,59 @@ ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key < /dev/null
 
 **NOTE:** Using `mount` requires that your container runs with the `CAP_SYS_ADMIN` capability turned on. [See this answer for more information](https://github.com/yieldstudio/sftp/issues/60#issuecomment-332909232).
 
+
+
 ## S3FS Mounting
 
-You can mount an S3 bucket using s3fs. You need to provide your AWS credentials and the bucket name as environment variables. You also need to install s3fs in the container. You can do this by creating a custom Dockerfile that extends the yieldstudio/sftp image.
+You can mount an S3 bucket using s3fs with the following environment variables:
+
+- `S3FS_ENABLED`: enable S3FS mounting (`true` or `1`)
+- `AWS_BUCKET`: S3 bucket name
+- `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`: AWS credentials
+- `S3FS_CREDENTIALS`: alternative, format `access_key:secret_key`
+- `AWS_ENDPOINT`: S3 endpoint URL (default: https://s3.amazonaws.com)
+- `AWS_DEFAULT_REGION`: AWS region (default: us-east-1)
+- `S3FS_ARGS`: additional s3fs options (e.g. `allow_other,use_path_request_style,nocopyapi`)
+- `S3FS_PARALLEL_COUNT`: number of parallel threads (default: 15)
+- `S3FS_MULTIPART_SIZE`: multipart size (default: 128)
+- `S3FS_DEBUG`: enable debug mode (`true` or `1`)
+- `S3FS_ROOTDIR`: root directory for s3fs (default: /opt/s3fs)
+- `S3FS_MOUNT`: mount point in the container (default: /opt/s3fs/bucket)
+- `S3FS_AUTHFILE`: path to the authentication file (default: /opt/s3fs/passwd-s3fs)
+- `AWS_USE_PATH_STYLE_ENDPOINT`, `S3FS_ALLOW_OTHER`, `S3FS_NO_COPY_API`: boolean options for mounting
+
+Example:
 
 ```
 docker run \
-    -e ENABLE_S3FS=true \
-    -e AWS_S3_BUCKET=<your-bucket-name> \
-    -e AWS_S3_ACCESS_KEY_ID=<your-access-key-id> \
-    -e AWS_S3_SECRET_ACCESS_KEY=<your-secret-access-key> \
+    -e S3FS_ENABLED=true \
+    -e AWS_BUCKET=<your-bucket-name> \
+    -e AWS_ACCESS_KEY_ID=<your-access-key-id> \
+    -e AWS_SECRET_ACCESS_KEY=<your-secret-access-key> \
+    -e S3FS_ALLOW_OTHER=true \
+    -e S3FS_NO_COPY_API=true \
+    -e S3FS_PARALLEL_COUNT=15 \
+    -e S3FS_MULTIPART_SIZE=128 \
     -p 2222:22 -d yieldstudio/sftp \
     foo::1001
 ```
 
 ### Scaleway S3
 
-If you are using Scaleway S3, you need to provide the endpoint as well.
+For Scaleway S3, add the custom endpoint:
 
 ```
 docker run \
-    -e ENABLE_S3FS=true \
-    -e AWS_S3_BUCKET=<your-bucket-name> \
-    -e AWS_S3_ACCESS_KEY_ID=<your-access-key-id> \
-    -e AWS_S3_SECRET_ACCESS_KEY=<your-secret-access-key> \
-    -e AWS_S3_URL="https://s3.<region>.scw.cloud" \
-    -e S3FS_ARGS="allow_other,use_path_request_style,nocopyapi,parallel_count=15,multipart_size=128" \
+    -e S3FS_ENABLED=true \
+    -e AWS_BUCKET=<your-bucket-name> \
+    -e AWS_ACCESS_KEY_ID=<your-access-key-id> \
+    -e AWS_SECRET_ACCESS_KEY=<your-secret-access-key> \
+    -e AWS_ENDPOINT="https://s3.<region>.scw.cloud" \
+    -e AWS_USE_PATH_STYLE_ENDPOINT=true \
+    -e S3FS_ALLOW_OTHER=true \
+    -e S3FS_NO_COPY_API=true \
+    -e S3FS_PARALLEL_COUNT=15 \
+    -e S3FS_MULTIPART_SIZE=128 \
     -e SFTP_USERS="foo::1001" \
     -p 2222:22 -d yieldstudio/sftp
 ```
